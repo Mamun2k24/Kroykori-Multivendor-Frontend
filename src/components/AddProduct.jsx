@@ -1,0 +1,918 @@
+import React, { useMemo, useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { toast, ToastContainer } from "react-toastify";
+import { FiX, FiUpload, FiTrash, FiCheckCircle } from "react-icons/fi";
+import "react-toastify/dist/ReactToastify.css";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
+
+const MAX_IMAGES = 4;
+
+const withBase = (path) => {
+  const base = import.meta.env.VITE_APP_SERVER_URL || "";
+  const needsSlash = base.endsWith("/") ? "" : "/";
+  return `${base}${needsSlash}${String(path).replace(/^\/+/, "")}`;
+};
+
+const isNonEmpty = (v) => typeof v === "string" && v.trim().length > 0;
+
+const quillModules = {
+  toolbar: [
+    [{ header: [1, 2, 3, false] }],
+    ["bold", "italic", "underline"],
+    [{ color: [] }, { background: [] }],
+    [{ align: [] }],
+    [{ list: "ordered" }, { list: "bullet" }],
+    ["clean"],
+  ],
+};
+
+export default function AddProduct({
+  isOpen = true,
+  isClose = () => {},
+  refetch,
+  onSuccess,
+  title = "Add Product",
+}) {
+  const [longDetailsHtml, setLongDetailsHtml] = useState("");
+
+  const [selectedParentCategory, setSelectedParentCategory] = useState(null);
+  const [selectedSubCategory, setSelectedSubCategory] = useState(null);
+
+  const [imageUrl, setImageUrl] = useState([]);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const [sizeWeights, setSizeWeights] = useState([{ size: "" }]);
+  const [chestSizes, setChestSizes] = useState([{ size: "" }]);
+  const [waistSizes, setWaistSizes] = useState([{ size: "" }]);
+
+  const [selectedColors, setSelectedColors] = useState([]);
+  const [isOpenDropdown, setIsOpenDropdown] = useState(false);
+
+  const [isSaving, setIsSaving] = useState(false);
+
+  const USE_FREE_DELIVERY_ZONES = true;
+  const [deliveryType, setDeliveryType] = useState("cash_on_delivery");
+  const [deliveryZone, setDeliveryZone] = useState("inside_dhaka");
+
+  // Pre-book states
+  const [preBookEnabled, setPreBookEnabled] = useState(false);
+  const [preBookDate, setPreBookDate] = useState("");
+  const [preBookLimit, setPreBookLimit] = useState(0);
+
+  useEffect(() => {
+    if (deliveryType !== "free_delivery") {
+      setDeliveryZone("inside_dhaka");
+    }
+  }, [deliveryType]);
+
+  const {
+    data: categories = [],
+    isLoading: categoriesLoading,
+    error: categoriesError,
+  } = useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => {
+      const r = await fetch(withBase("api/categories"), {
+        credentials: "include",
+      });
+      if (!r.ok) throw new Error("Failed to fetch categories");
+      return r.json();
+    },
+    enabled: isOpen,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+  });
+
+  const {
+    data: colorOptions = [],
+    isLoading: colorsLoading,
+    error: colorError,
+  } = useQuery({
+    queryKey: ["colors"],
+    queryFn: async () => {
+      const r = await fetch(withBase("api/colors"), {
+        credentials: "include",
+      });
+      if (!r.ok) throw new Error("Failed to fetch colors");
+      return r.json();
+    },
+    enabled: isOpen,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+  });
+
+  const safeCategories = useMemo(() => {
+    if (!Array.isArray(categories)) return [];
+    return categories.filter((cat) => !cat.parent);
+  }, [categories]);
+
+  const safeColors = useMemo(() => colorOptions ?? [], [colorOptions]);
+
+  const subcategoryOptions = selectedParentCategory?.subcategories || [];
+
+  const parseNumber = (v, def = 0) => {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : def;
+  };
+
+  const handleColorSelect = (colorName) => {
+    setSelectedColors((prev) =>
+      prev.includes(colorName)
+        ? prev.filter((c) => c !== colorName)
+        : [...prev, colorName]
+    );
+  };
+
+  const handleImageUpload = async (e) => {
+    const files = e.target.files;
+    if (!files?.length) return;
+
+    if (imageUrl.length + files.length > MAX_IMAGES) {
+      toast.warn(`Max ${MAX_IMAGES} images allowed.`);
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const uploads = Array.from(files).map(async (file) => {
+        const formData = new FormData();
+        formData.append("image", file);
+
+        const imageApiKey = import.meta.env.VITE_IMGBB_API_KEY;
+
+        if (!imageApiKey) {
+          throw new Error("Image upload API key is missing");
+        }
+
+        const resp = await fetch(
+          `https://api.imgbb.com/1/upload?key=${imageApiKey}`,
+          {
+            method: "POST",
+            body: formData,
+          },
+        );
+        const data = await resp.json();
+        if (data?.success) return data.data.url;
+        throw new Error("Upload failed");
+      });
+
+      const results = await Promise.allSettled(uploads);
+      const ok = results
+        .filter((r) => r.status === "fulfilled")
+        .map((r) => r.value);
+      const fail = results.filter((r) => r.status === "rejected").length;
+
+      if (ok.length) {
+        setImageUrl((prev) => [...prev, ...ok].slice(0, MAX_IMAGES));
+        toast.success(`${ok.length} image(s) uploaded`);
+      }
+      if (fail) toast.warn(`${fail} image(s) failed to upload`);
+    } catch (err) {
+      console.error(err);
+      toast.error("Image upload error");
+    } finally {
+      setIsUploading(false);
+      e.target.value = "";
+    }
+  };
+
+  const removeImage = (idx) => {
+    setImageUrl((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleSizeChange = (index, value) => {
+    setSizeWeights((prev) => {
+      const copy = [...prev];
+      copy[index].size = value;
+      return copy;
+    });
+  };
+
+  const handleChestChange = (index, value) => {
+    setChestSizes((prev) => {
+      const copy = [...prev];
+      copy[index].size = value;
+      return copy;
+    });
+  };
+
+  const handleWaistChange = (index, value) => {
+    setWaistSizes((prev) => {
+      const copy = [...prev];
+      copy[index].size = value;
+      return copy;
+    });
+  };
+
+  const handleAddSizeRow = () => {
+    setSizeWeights((prev) => [...prev, { size: "" }]);
+  };
+
+  const handleAddChestRow = () => {
+    setChestSizes((prev) => [...prev, { size: "" }]);
+  };
+
+  const handleAddWaistRow = () => {
+    setWaistSizes((prev) => [...prev, { size: "" }]);
+  };
+
+  const resetFormState = (form) => {
+    form.reset();
+    setSelectedParentCategory(null);
+    setSelectedSubCategory(null);
+    setSelectedColors([]);
+    setSizeWeights([{ size: "" }]);
+    setChestSizes([{ size: "" }]);
+    setWaistSizes([{ size: "" }]);
+    setImageUrl([]);
+    setDeliveryType("cash_on_delivery");
+    setDeliveryZone("inside_dhaka");
+    setPreBookEnabled(false);
+    setPreBookDate("");
+    setPreBookLimit(0);
+    setLongDetailsHtml("");
+    setIsOpenDropdown(false);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const form = e.currentTarget;
+
+    const productName = form.productName.value.trim();
+    const brand = form.brand.value.trim();
+
+    const buyPrice = parseNumber(form.buyPrice.value, 0);
+    const regularPrice = parseNumber(form.regularPrice.value, 0);
+    const price = parseNumber(form.price.value, 0);
+
+    const status = form.status.value;
+    const stock = parseNumber(form.stock.value, 0);
+    const sku = (form.sku?.value ?? "").trim();
+
+    const details = form.details.value
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter(Boolean)
+      .join("\n");
+
+    const longDetails = String(longDetailsHtml || "").trim();
+
+    const categoryIds = selectedParentCategory
+      ? selectedSubCategory
+        ? [selectedParentCategory._id, selectedSubCategory._id]
+        : [selectedParentCategory._id]
+      : [];
+
+    const primaryCategory = selectedParentCategory || null;
+
+    if (!isNonEmpty(productName)) return toast.warn("Product name is required");
+    if (!selectedParentCategory) return toast.warn("Please select a category");
+    if (!imageUrl.length) return toast.warn("Please upload at least 1 image");
+
+    if (buyPrice < 0) return toast.warn("Buying price cannot be negative");
+    if (regularPrice <= 0)
+      return toast.warn("Regular price must be greater than 0");
+    if (price <= 0) return toast.warn("Sell price must be greater than 0");
+
+    if (!isNonEmpty(sku)) return toast.warn("SKU is required");
+    if (!isNonEmpty(details)) return toast.warn("Product info is required");
+    if (!isNonEmpty(longDetails))
+      return toast.warn("Additional info is required");
+    if (stock < 0) return toast.warn("Stock cannot be negative");
+
+    const sizeWeightArray = sizeWeights
+      .map((sw) => ({ size: String(sw.size || "").trim() }))
+      .filter((sw) => sw.size);
+
+    const chestArray = chestSizes
+      .map((item) => ({ size: String(item.size || "").trim() }))
+      .filter((item) => item.size);
+
+    const waistArray = waistSizes
+      .map((item) => ({ size: String(item.size || "").trim() }))
+      .filter((item) => item.size);
+
+    const delivery = {
+      type: deliveryType,
+      area:
+        deliveryType === "free_delivery"
+          ? USE_FREE_DELIVERY_ZONES
+            ? deliveryZone
+            : "all_bangladesh"
+          : null,
+    };
+
+    const payload = {
+      productName,
+      categoryIds,
+      categoryName: primaryCategory?.name || "",
+      productImage: imageUrl,
+      brand,
+      buyPrice,
+      regularPrice,
+      price,
+      delivery,
+      status,
+      stock,
+      sku,
+      preBook: {
+        enabled: preBookEnabled,
+        expectedDeliveryDate: preBookDate || null,
+        limit: Number(preBookLimit || 0),
+        bookedCount: 0,
+        requireAdvancePayment: false,
+        advancePercentage: 0,
+        closed: false,
+      },
+      sizeWeight: sizeWeightArray,
+      chest: chestArray,
+      waist: waistArray,
+      color: selectedColors,
+      details,
+      longDetails,
+    };
+
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      toast.error("Please login again.");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const resp = await fetch(withBase("api/products"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        credentials: "include",
+        body: JSON.stringify(payload),
+      });
+
+      const data = await resp.json().catch(() => ({}));
+
+      if (!resp.ok) {
+        let message = data?.message || "Failed to add product";
+
+        if (data?.errors) {
+          const firstKey = Object.keys(data.errors)[0];
+          message = data.errors[firstKey]?.message || message;
+        }
+
+        throw new Error(message);
+      }
+
+      toast.success(data?.message || "Product added successfully!");
+
+      if (typeof refetch === "function") {
+        await refetch();
+      }
+
+      resetFormState(form);
+
+      if (typeof onSuccess === "function") {
+        onSuccess(data);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(err?.message || "Failed to add product.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (categoriesLoading || colorsLoading) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div className="bg-white rounded-xl shadow p-6 text-sm">Loading…</div>
+      </div>
+    );
+  }
+
+  if (categoriesError) {
+    return <div>Error loading categories: {categoriesError.message}</div>;
+  }
+
+  if (colorError) {
+    return <div>Error loading colors: {colorError.message}</div>;
+  }
+
+  if (!isOpen) return null;
+
+  return (
+    <div>
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div className="bg-white rounded-2xl shadow-xl w-[95%] max-w-4xl p-0 overflow-hidden max-h-[95vh] overflow-y-auto">
+          <div className="px-5 py-4 border-b flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-50">
+                <FiCheckCircle className="text-blue-600" />
+              </span>
+              <div>
+                <h2 className="text-lg font-semibold">{title}</h2>
+                <p className="mt-0.5 text-xs text-slate-500">
+                  Seller products require admin approval before publishing.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={isClose}
+              className="p-2 rounded-full hover:bg-gray-100"
+              aria-label="Close"
+              type="button"
+            >
+              <FiX />
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="grid md:grid-cols-2 gap-6 p-5">
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Product Name
+                </label>
+                <input
+                  name="productName"
+                  type="text"
+                  required
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Apple iMac 27''"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Category
+                  </label>
+                  <select
+                    value={selectedParentCategory?._id || ""}
+                    onChange={(e) => {
+                      const selected =
+                        safeCategories.find(
+                          (cat) => cat._id === e.target.value,
+                        ) || null;
+                      setSelectedParentCategory(selected);
+                      setSelectedSubCategory(null);
+                    }}
+                    className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Select category</option>
+                    {safeCategories.map((cat) => (
+                      <option key={cat._id} value={cat._id}>
+                        {cat.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Subcategory
+                  </label>
+                  <select
+                    value={selectedSubCategory?._id || ""}
+                    onChange={(e) => {
+                      const selected =
+                        subcategoryOptions.find(
+                          (sub) => sub._id === e.target.value,
+                        ) || null;
+                      setSelectedSubCategory(selected);
+                    }}
+                    disabled={!selectedParentCategory}
+                    className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  >
+                    <option value="">Select subcategory</option>
+                    {subcategoryOptions.map((sub) => (
+                      <option key={sub._id} value={sub._id}>
+                        {sub.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Brand</label>
+                <input
+                  name="brand"
+                  type="text"
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Apple"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Buying Price
+                  </label>
+                  <input
+                    name="buyPrice"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="৳2000"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Regular Price
+                  </label>
+                  <input
+                    name="regularPrice"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    required
+                    className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="৳2300"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Sell Price
+                  </label>
+                  <input
+                    name="price"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    required
+                    className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="৳2500"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium">Delivery</label>
+
+                <div className="flex items-center gap-4">
+                  <label className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input
+                      type="radio"
+                      name="deliveryType"
+                      value="cash_on_delivery"
+                      checked={deliveryType === "cash_on_delivery"}
+                      onChange={() => setDeliveryType("cash_on_delivery")}
+                    />
+                    Cash On Delivery
+                  </label>
+
+                  <label className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input
+                      type="radio"
+                      name="deliveryType"
+                      value="free_delivery"
+                      checked={deliveryType === "free_delivery"}
+                      onChange={() => setDeliveryType("free_delivery")}
+                    />
+                    Free Delivery
+                  </label>
+                </div>
+
+                {deliveryType === "free_delivery" && USE_FREE_DELIVERY_ZONES && (
+                  <div>
+                    <label className="block text-sm font-medium mb-1">
+                      Free Delivery Area
+                    </label>
+                    <select
+                      value={deliveryZone}
+                      onChange={(e) => setDeliveryZone(e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="inside_dhaka">Inside Dhaka</option>
+                      <option value="outside_dhaka">Outside Dhaka</option>
+                      <option value="all_bangladesh">All Bangladesh</option>
+                    </select>
+                  </div>
+                )}
+              </div>
+
+              {/* Pre-book section */}
+              <div className="space-y-3">
+                <label className="flex items-center gap-2 text-sm font-medium cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={preBookEnabled}
+                    onChange={(e) => setPreBookEnabled(e.target.checked)}
+                    className="rounded text-blue-600 focus:ring-blue-500"
+                  />
+                  Enable Pre-book
+                </label>
+
+                {preBookEnabled && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        Expected Delivery Date
+                      </label>
+                      <input
+                        type="date"
+                        value={preBookDate}
+                        onChange={(e) => setPreBookDate(e.target.value)}
+                        className="w-full px-3 py-2 border rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        Pre-book Limit
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={preBookLimit}
+                        onChange={(e) => setPreBookLimit(e.target.value)}
+                        className="w-full px-3 py-2 border rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Status</label>
+                  <select
+                    name="status"
+                    className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    defaultValue="available"
+                  >
+                    <option value="available">Available</option>
+                    <option value="out_of_stock">Out of Stock</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Quantity</label>
+                  <input
+                    name="stock"
+                    type="number"
+                    min="0"
+                    className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Optional"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">SKU</label>
+                  <input
+                    name="sku"
+                    type="text"
+                    required
+                    className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="SKU-12345"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Product Images <span className="text-gray-500">(max {MAX_IMAGES})</span>
+                </label>
+
+                <label className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-400 transition">
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <FiUpload />
+                    <span>Click to upload</span>
+                  </div>
+                  <input
+                    type="file"
+                    multiple
+                    onChange={handleImageUpload}
+                    className="hidden"
+                    disabled={imageUrl.length >= MAX_IMAGES}
+                  />
+                </label>
+
+                {isUploading && <p className="text-xs text-gray-500 mt-1">Uploading…</p>}
+
+                {!!imageUrl.length && (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-3">
+                    {imageUrl.map((url, idx) => (
+                      <div key={idx} className="relative group">
+                        <img
+                          src={url}
+                          alt={`Uploaded ${idx + 1}`}
+                          className="w-full h-28 object-cover rounded-lg"
+                          loading="lazy"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeImage(idx)}
+                          className="absolute top-1 right-1 p-1.5 bg-white/90 rounded-full shadow hover:bg-red-50"
+                          title="Remove"
+                        >
+                          <FiTrash className="text-red-600" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium">Select Size</label>
+                  <button
+                    type="button"
+                    onClick={handleAddSizeRow}
+                    className="text-xs px-2 py-1 rounded bg-blue-50 text-blue-700 hover:bg-blue-100"
+                  >
+                    + Add Row
+                  </button>
+                </div>
+
+                <div className="space-y-2">
+                  {sizeWeights.map((sw, i) => (
+                    <div key={i} className="grid grid-cols-1 gap-2">
+                      <input
+                        type="text"
+                        className="px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Size (e.g. S, M, L, XL)"
+                        value={sw.size}
+                        onChange={(e) => handleSizeChange(i, e.target.value)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium">Chest</label>
+                  <button
+                    type="button"
+                    onClick={handleAddChestRow}
+                    className="text-xs px-2 py-1 rounded bg-blue-50 text-blue-700 hover:bg-blue-100"
+                  >
+                    + Add Row
+                  </button>
+                </div>
+
+                <div className="space-y-2">
+                  {chestSizes.map((item, i) => (
+                    <div key={i} className="grid grid-cols-1 gap-2">
+                      <input
+                        type="text"
+                        className="px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Chest (e.g. 36, 38, 40)"
+                        value={item.size}
+                        onChange={(e) => handleChestChange(i, e.target.value)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium">Waist</label>
+                  <button
+                    type="button"
+                    onClick={handleAddWaistRow}
+                    className="text-xs px-2 py-1 rounded bg-blue-50 text-blue-700 hover:bg-blue-100"
+                  >
+                    + Add Row
+                  </button>
+                </div>
+
+                <div className="space-y-2">
+                  {waistSizes.map((item, i) => (
+                    <div key={i} className="grid grid-cols-1 gap-2">
+                      <input
+                        type="text"
+                        className="px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Waist (e.g. 28, 30, 32)"
+                        value={item.size}
+                        onChange={(e) => handleWaistChange(i, e.target.value)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="relative">
+                <label className="block text-sm font-medium mb-1">Colors</label>
+                <div
+                  className="w-full px-3 py-2 border rounded-lg cursor-pointer bg-white"
+                  onClick={() => setIsOpenDropdown(!isOpenDropdown)}
+                >
+                  {selectedColors.length ? (
+                    <div className="flex flex-wrap gap-2">
+                      {selectedColors.map((c) => (
+                        <span
+                          key={c}
+                          className="inline-flex items-center gap-2 px-2 py-1 rounded-full text-xs bg-gray-100"
+                        >
+                          {c}
+                          <span
+                            className="w-3 h-3 rounded-full"
+                            style={{
+                              background:
+                                safeColors.find((x) => x.name === c)?.code || "#999",
+                            }}
+                          />
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="text-gray-500 text-sm">Select colors</span>
+                  )}
+                </div>
+
+                {isOpenDropdown && (
+                  <div className="absolute z-10 w-full bg-white border rounded-lg mt-1 max-h-44 overflow-y-auto shadow">
+                    {safeColors.map((color) => {
+                      const active = selectedColors.includes(color.name);
+                      return (
+                        <div
+                          key={color._id}
+                          onClick={() => handleColorSelect(color.name)}
+                          className={`flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-gray-50 ${
+                            active ? "bg-blue-50" : ""
+                          }`}
+                        >
+                          <span className="text-sm">{color.name}</span>
+                          <span
+                            className={`w-5 h-5 rounded-full border ${
+                              active ? "ring ring-blue-400" : ""
+                            }`}
+                            style={{ backgroundColor: color.code }}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="md:col-span-2 grid md:grid-cols-1 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Short Product Info
+                </label>
+                <textarea
+                  name="details"
+                  rows="4"
+                  required
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Brief description (you can use multiple lines)"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Full Description
+                </label>
+
+                <div className="rounded-lg overflow-hidden border border-gray-300 quillWrap">
+                  <ReactQuill
+                    theme="snow"
+                    value={longDetailsHtml}
+                    onChange={setLongDetailsHtml}
+                    modules={quillModules}
+                    placeholder="Write full description..."
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="md:col-span-2 flex items-center justify-between pt-2">
+              <button
+                type="button"
+                onClick={isClose}
+                className="px-4 py-2 rounded-lg border hover:bg-gray-50"
+              >
+                Close
+              </button>
+              <button
+                type="submit"
+                disabled={isSaving || isUploading}
+                className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60"
+              >
+                {isSaving ? "Adding…" : "Add Product"}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <ToastContainer position="top-center" autoClose={2000} hideProgressBar />
+    </div>
+  );
+}

@@ -1,0 +1,268 @@
+/* ---------- ROOT WRAP ---------- */
+.hero-wrap {
+  padding: 14px 20px;
+}
+
+
+/* IMPORTANT: prevent slick/children from overflowing grid */
+.hero-left,
+.hero-middle,
+.hero-right {
+  min-width: 0;
+}
+
+/* ---------- RESPONSIVE ---------- */
+@media (max-width: 1024px) {
+  .hero-grid {
+    grid-template-columns: 240px minmax(0, 1fr);
+  }
+  .hero-right {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-wrap {
+    padding: 14px;
+  }
+  
+  .hero-grid {
+  grid-template-columns: 220px minmax(0, 1fr) 340px;
+}
+  .hero-left {
+    order: 2;
+  }
+  .hero-middle {
+    order: 1;
+  }
+  .hero-right {
+    order: 3;
+    display: block;
+  }
+}
+
+/* ---------- LEFT: CATEGORY BOX ---------- */
+.hero-cat-box {
+  background: #fff;
+  border: 1px solid #f0c3a9;
+  border-radius: 12px;
+  padding: 10px;
+  height: 100%;
+}
+
+.hero-cat-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hero-cat-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 10px;
+  text-decoration: none;
+  color: #2b2b2b;
+  transition: background 0.15s ease;
+}
+
+.hero-cat-item:hover {
+  background: #f3fbf6;
+}
+
+.hero-cat-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  background: #f3fbf6;
+  flex: 0 0 28px;
+  overflow: hidden;
+}
+
+.hero-cat-icon img {
+  width: 18px !important;
+  height: 18px !important;
+  object-fit: contain;
+  display: block;
+}
+
+.hero-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #36b37e;
+}
+
+.hero-cat-name {
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+
+.hero-show-more {
+  border: none;
+  background: transparent;
+  color: #199a5b;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ---------- MIDDLE: SLIDER ---------- */
+/* Keep slider height stable so it doesn't jump or push everything down */
+.hero-full {
+  background: #fff;
+  border-radius: 14px;
+  overflow: hidden;
+  height: 100%;
+  min-height: 390px;
+  position: relative;
+}
+
+/* slick fixes */
+.hero-full .slick-slider,
+.hero-full .slick-list,
+.hero-full .slick-track,
+.hero-full .slick-slide > div {
+  height: 100%;
+}
+
+.hero-slide {
+  height: 100%;
+}
+
+.hero-img {
+  width: 100% !important;
+  height: 390px !important; /* lock height like screenshot */
+  display: block;
+  object-fit: cover;
+}
+
+/* Mobile slider height */
+@media (max-width: 768px) {
+  .hero-full {
+    min-height: 240px;
+  }
+  .hero-img {
+    height: 240px !important;
+  }
+}
+
+/* arrows */
+.hero-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  font-size: 22px;
+}
+
+.hero-arrow--prev {
+  left: 12px;
+}
+
+.hero-arrow--next {
+  right: 12px;
+}
+
+/* dots */
+.hero-full .slick-dots {
+  bottom: 14px;
+}
+
+/* ---------- RIGHT: SIDE BANNERS ---------- */
+.hero-side-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: 100%;
+}
+
+/* make each banner fixed height like screenshot */
+.hero-side-card {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 10px;
+  border-radius: 14px;
+  overflow: hidden;
+  min-height: 187px;
+  padding: 18px;
+  text-decoration: none;
+  border: 1px solid #eef2f0;
+}
+
+/* first greenish */
+.hero-side-card:nth-child(1) {
+  background: #e6f0c9;
+}
+
+/* second beige */
+.hero-side-card:nth-child(2) {
+  background: #efe9dc;
+}
+
+.hero-side-text {
+  width: 60%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.hero-side-title {
+  margin: 0;
+  font-size: 22px;
+  line-height: 1.15;
+  color: #1f2d3d;
+  font-weight: 800;
+}
+
+.hero-side-subtitle {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.2;
+  color: #1f2d3d;
+  font-weight: 800;
+}
+
+.hero-side-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  padding: 9px 14px;
+  border-radius: 10px;
+  background: #2bb673;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.hero-side-imgWrap {
+  width: 40%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+}
+
+.hero-side-imgWrap img {
+  width: 100% !important;
+  max-width: 180px;
+  height: auto !important;
+  object-fit: contain;
+  display: block;
+}

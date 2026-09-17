@@ -19,7 +19,7 @@ const Footer = () => {P
                 <strong>Call Us:</strong> (+88)01826167946
               </p>
               <p className="text-gray-600">
-                <strong>Email:</strong> bholamart24@gmail.com
+                <strong>Email:</strong> kroykori@gmail.com
               </p>
               <p className="text-gray-600">
                 <strong>Hours:</strong> 24-Hours, Saturday - Thursday

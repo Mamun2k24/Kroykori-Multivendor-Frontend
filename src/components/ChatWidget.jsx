@@ -29,7 +29,7 @@ const ChatWidget = () => {
           <ul>
             <li className="mb-2">
               <a
-                href="https://m.me/bholamart24"
+                href="https://m.me/kroykori"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center p-2 border rounded-lg hover:bg-gray-100"

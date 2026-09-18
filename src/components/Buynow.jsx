@@ -251,7 +251,7 @@ const Buynow = () => {
       return;
     }
 
-    const isManualPayment = ["bKash", "Nagad"].includes(paymentMethod);
+    const isManualPayment = ["bKash",].includes(paymentMethod);
     const senderNumber = String(manualPayment.senderNumber || "").replace(
       /\s+/g,
       "",

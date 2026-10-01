@@ -1,6 +1,5 @@
-
 import React, { useEffect, useMemo, useState } from "react";
-import { FaStar, FaRegStar } from "react-icons/fa";
+import { FaStar, FaRegStar, FaWhatsapp, FaPhoneAlt, FaArrowLeft } from "react-icons/fa";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Slider from "react-slick";
@@ -18,7 +17,6 @@ import { addRecentlyViewed } from "../../../../utils/recentlyViewed";
 import ProductReviews from "../../../../components/reviews/ProductReviews";
 import { splitToBullets } from "../../../../utils/splitToBullets";
 import { getGuestId } from "../../../../hooks/guest";
-import { FaWhatsapp, FaPhoneAlt } from "react-icons/fa";
 import { trackPixel } from "../../../../utils/metaPixel";
 
 /* ---------- helpers ---------- */
@@ -43,6 +41,15 @@ export default function ProductDetails() {
   const { user } = useUser();
   const userId = user?.id;
   const guestId = getGuestId();
+
+  // 👈 সঠিকভাবে আপডেট করা ব্যাক ফাংশন
+  const handleGoBack = () => {
+    if (window.history.state && window.history.state.idx > 0) {
+      navigate(-1); // অ্যাপের আগের পেজে ফেরত যাবে
+    } else {
+      navigate("/"); // সরাসরি লিঙ্কে ঢুকলে হোমপেজে যাবে
+    }
+  };
 
   const {
     _id,
@@ -87,7 +94,7 @@ export default function ProductDetails() {
   useEffect(() => {
     if (!_id) return;
 
-    // Reviews আগে load হয়ে যাবে
+    // Reviews আগে load হয়ে যাবে
     qc.prefetchQuery({
       queryKey: ["reviews", _id],
       queryFn: async () => {
@@ -353,6 +360,17 @@ Color: ${selectedColor || "N/A"}`;
     <>
       <div className="bg-gradient-to-br from-slate-50 via-white to-slate-50">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-10 py-5 sm:py-8 lg:py-10">
+          
+          {/* 👈 ব্যাক বাটন UI */}
+          <button
+            onClick={handleGoBack}
+            type="button"
+            className="flex items-center gap-2 text-slate-700 hover:text-slate-900 font-medium mb-4 cursor-pointer transition-all"
+          >
+            <FaArrowLeft size={18} />
+            <span>ফিরে যান</span>
+          </button>
+
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10">
             {/* Gallery */}
             <div className="lg:col-span-6 xl:col-span-5">
@@ -936,8 +954,6 @@ Color: ${selectedColor || "N/A"}`;
           </div>
         </div>
 
-        {/* bottom padding for sticky bar */}
-        <div className="sm:hidden h-40" />
       </div>
 
       <div>

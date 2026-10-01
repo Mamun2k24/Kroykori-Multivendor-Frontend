@@ -1,7 +1,16 @@
 // components/navigation/HeaderDesktop.jsx
 import React, { useEffect, useRef, useState, memo } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { FiSearch, FiUser, FiChevronDown, FiChevronRight } from "react-icons/fi";
+import { 
+  FiSearch, 
+  FiUser, 
+  FiChevronDown, 
+  FiChevronRight, 
+  FiHome, 
+  FiShoppingBag, 
+  FiInfo, 
+  FiPhoneCall 
+} from "react-icons/fi";
 import { HiOutlineMenuAlt2 as MenuIcon } from "react-icons/hi";
 import { RiCustomerService2Line } from "react-icons/ri";
 import { ShoppingCart, Grid } from "lucide-react";
@@ -115,7 +124,7 @@ const HeaderDesktop = ({
             )}
           </Link>
 
-          {/* CENTER: Search Input Infrastructure (অপরিবর্তিত) */}
+          {/* CENTER: Search Input Infrastructure */}
           <div className="flex-1 max-w-[650px]">
             <div ref={boxRef} className="relative w-full">
               <form
@@ -182,7 +191,7 @@ const HeaderDesktop = ({
             </div>
           </div>
 
-          {/* RIGHT: Support & Cart (অপরিবর্তিত) */}
+          {/* RIGHT: Support & Cart */}
           <div className="flex items-center gap-6 shrink-0">
             <Link
               to="/support"
@@ -229,7 +238,7 @@ const HeaderDesktop = ({
                   <FiChevronDown className={`w-3.5 h-3.5 transform transition-transform ${catOpen ? "rotate-180" : ""}`} />
                 </button>
 
-                {/* ─── PREMIUM DESKTOP DROPDOWN LAYER (image_209361.png ম্যাচিং করা) ─── */}
+                {/* DROPDOWN LAYER */}
                 {catOpen && (
                   <div className="absolute left-0 z-50 mt-2 bg-white border border-gray-100/80 rounded-2xl shadow-2xl flex min-w-[300px] max-w-[700px] overflow-hidden">
                     
@@ -281,7 +290,7 @@ const HeaderDesktop = ({
                       </div>
                     </div>
 
-                    {/* Right Column: Flyout Subcategories (মাউস হোভার করলে ডানপাশে ওপেন হবে) */}
+                    {/* Right Column: Flyout Subcategories */}
                     {activeHoverCat && activeHoverCat.subcategories && activeHoverCat.subcategories.length > 0 && (
                       <div className="w-[320px] p-5 bg-gray-50/50 max-h-[480px] overflow-y-auto animate-fadeIn">
                         <h4 className="text-xs font-black uppercase text-gray-400 tracking-wider mb-3 border-b border-gray-200/60 pb-1.5">
@@ -310,12 +319,19 @@ const HeaderDesktop = ({
                 )}
               </div>
 
-              {/* Standard Nav Links (অপরিবর্তিত) */}
+              {/* Standard Nav Links With Added Icons */}
               <div className="flex items-center gap-6">
-                <Link to="/" className="text-[#F77426] hover:opacity-80 transition font-black">Home</Link>
+                <Link 
+                  to="/" 
+                  className="flex items-center gap-1.5 text-[#F77426] hover:opacity-80 transition font-black"
+                >
+                  <FiHome className="w-4 h-4" />
+                  <span>Home</span>
+                </Link>
                 
                 <div className="relative group py-4">
-                  <div className="hover:text-[#F77426] flex items-center gap-0.5 cursor-pointer transition">
+                  <div className="hover:text-[#F77426] flex items-center gap-1.5 cursor-pointer transition font-bold">
+                    <FiShoppingBag className="w-4 h-4 text-slate-500 group-hover:text-[#F77426] transition-colors" />
                     <span>Shop</span>
                     <FiChevronDown className="w-3 h-3" />
                   </div>
@@ -353,13 +369,26 @@ const HeaderDesktop = ({
                   </div>
                 </div>
 
-                <Link to="/about" className="hover:text-[#F77426] transition">About Us</Link>
-                <Link to="/contact" className="hover:text-[#F77426] transition">Contact</Link>
+                <Link 
+                  to="/about" 
+                  className="flex items-center gap-1.5 hover:text-[#F77426] transition font-bold group"
+                >
+                  <FiInfo className="w-4 h-4 text-slate-500 group-hover:text-[#F77426] transition-colors" />
+                  <span>About Us</span>
+                </Link>
+
+                <Link 
+                  to="/contact" 
+                  className="flex items-center gap-1.5 hover:text-[#F77426] transition font-bold group"
+                >
+                  <FiPhoneCall className="w-4 h-4 text-slate-500 group-hover:text-[#F77426] transition-colors" />
+                  <span>Contact</span>
+                </Link>
               </div>
 
             </div>
 
-            {/* Right Side: Account Actions Box (অপরিবর্তিত) */}
+            {/* Right Side: Account Actions Box */}
             <div className="text-xs font-bold text-slate-500">
               <Link 
                 to={user ? "/dashboard/profile" : "/login"} 

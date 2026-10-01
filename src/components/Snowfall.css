@@ -1,0 +1,347 @@
+/* =========================================
+   WINTER / ICY ATMOSPHERE
+========================================= */
+
+.winter-atmosphere {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9990;
+
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(190, 235, 255, 0.18),
+      transparent 45%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(190, 225, 255, 0.08),
+      rgba(30, 100, 150, 0.025) 45%,
+      rgba(180, 225, 255, 0.08)
+    );
+
+  mix-blend-mode: screen;
+}
+
+
+/* =========================================
+   FROST / ICE EDGE
+========================================= */
+
+.winter-frost {
+  position: fixed;
+  inset: 0;
+
+  pointer-events: none;
+  z-index: 9991;
+
+  box-shadow:
+    inset 0 0 70px rgba(180, 225, 255, 0.22),
+    inset 0 0 150px rgba(200, 240, 255, 0.12);
+
+  border: 1px solid rgba(220, 245, 255, 0.08);
+}
+
+
+/* =========================================
+   TOP ICE / ICICLES
+========================================= */
+
+.winter-icicles {
+  position: fixed;
+
+  top: 0;
+  left: 0;
+
+  width: 100%;
+  height: 55px;
+
+  pointer-events: none;
+  z-index: 10000;
+
+  overflow: hidden;
+}
+
+.winter-icicles span {
+  position: absolute;
+
+  top: -3px;
+
+  width: 7px;
+
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.85),
+    rgba(190, 235, 255, 0.45),
+    rgba(150, 220, 255, 0)
+  );
+
+  border-radius: 0 0 8px 8px;
+
+  filter: blur(0.3px);
+
+  box-shadow:
+    0 0 8px rgba(190, 235, 255, 0.5);
+}
+
+
+/* =========================================
+   SNOW CONTAINER
+========================================= */
+
+.snowfall-container {
+  position: fixed;
+
+  top: 0;
+  left: 0;
+
+  width: 100vw;
+  height: 100vh;
+
+  pointer-events: none;
+
+  z-index: 9999;
+
+  overflow: hidden;
+}
+
+
+/* =========================================
+   SNOW FLAKE
+========================================= */
+
+.snowflake-item {
+  position: absolute;
+
+  top: -50px;
+
+  animation:
+    realFall linear infinite,
+    realSway ease-in-out infinite;
+
+  will-change: top, transform;
+}
+
+
+/* =========================================
+   CSS SNOW CRYSTAL
+========================================= */
+
+.snow-crystal {
+  position: relative;
+
+  width: 100%;
+  height: 100%;
+
+  filter:
+    drop-shadow(0 0 3px rgba(255, 255, 255, 0.95))
+    drop-shadow(0 0 8px rgba(180, 230, 255, 0.7));
+}
+
+
+/* Main crystal branches */
+
+.snow-crystal::before,
+.snow-crystal::after,
+.snow-crystal span {
+  content: "";
+
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+
+  width: 100%;
+  height: 2px;
+
+  border-radius: 999px;
+
+  background: rgba(255, 255, 255, 0.95);
+
+  transform-origin: center;
+}
+
+
+/* 0 degree */
+
+.snow-crystal::before {
+  transform: translate(-50%, -50%) rotate(0deg);
+}
+
+
+/* 60 degree */
+
+.snow-crystal::after {
+  transform: translate(-50%, -50%) rotate(60deg);
+}
+
+
+/* 120 degree */
+
+.snow-crystal span:nth-child(1) {
+  transform: translate(-50%, -50%) rotate(120deg);
+}
+
+
+/* Extra branches */
+
+.snow-crystal span:nth-child(2) {
+  transform: translate(-50%, -50%) rotate(30deg);
+
+  opacity: 0.65;
+}
+
+
+.snow-crystal span:nth-child(3) {
+  transform: translate(-50%, -50%) rotate(90deg);
+
+  opacity: 0.65;
+}
+
+
+/* =========================================
+   SOFT SNOW DOT
+========================================= */
+
+.snow-dot {
+  width: 100%;
+  height: 100%;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle at 35% 30%,
+      #ffffff 0%,
+      rgba(255, 255, 255, 0.98) 25%,
+      rgba(210, 240, 255, 0.75) 55%,
+      rgba(180, 225, 255, 0.15) 100%
+    );
+
+  box-shadow:
+    0 0 5px rgba(255, 255, 255, 0.9),
+    0 0 12px rgba(180, 230, 255, 0.7);
+}
+
+
+/* =========================================
+   FALLING SNOW
+========================================= */
+
+@keyframes realFall {
+  0% {
+    top: -50px;
+  }
+
+  100% {
+    top: 105vh;
+  }
+}
+
+
+/* =========================================
+   WIND / SWAY
+========================================= */
+
+@keyframes realSway {
+  0%,
+  100% {
+    transform: translateX(0) rotate(0deg);
+  }
+
+  25% {
+    transform:
+      translateX(calc(var(--sway) * -0.5))
+      rotate(45deg);
+  }
+
+  50% {
+    transform:
+      translateX(var(--sway))
+      rotate(120deg);
+  }
+
+  75% {
+    transform:
+      translateX(calc(var(--sway) * 0.4))
+      rotate(200deg);
+  }
+}
+
+
+/* =========================================
+   WINTER MIST
+========================================= */
+
+.winter-mist {
+  position: fixed;
+
+  left: -10%;
+  bottom: -10px;
+
+  width: 120%;
+  height: 100px;
+
+  pointer-events: none;
+
+  z-index: 9992;
+
+  background:
+    radial-gradient(
+      ellipse at center,
+      rgba(220, 245, 255, 0.14),
+      transparent 70%
+    );
+
+  filter: blur(15px);
+
+  animation:
+    mistMove 8s ease-in-out infinite alternate;
+}
+
+
+@keyframes mistMove {
+  from {
+    transform: translateX(-3%);
+  }
+
+  to {
+    transform: translateX(3%);
+  }
+}
+
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media (max-width: 768px) {
+
+  .snowflake-item {
+    animation-duration: 10s, 5s;
+  }
+
+  .winter-frost {
+    box-shadow:
+      inset 0 0 40px rgba(180, 225, 255, 0.18),
+      inset 0 0 80px rgba(200, 240, 255, 0.08);
+  }
+
+  .winter-icicles {
+    height: 35px;
+  }
+}
+
+
+/* =========================================
+   REDUCE MOTION
+========================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .snowflake-item,
+  .winter-mist {
+    animation: none;
+  }
+}

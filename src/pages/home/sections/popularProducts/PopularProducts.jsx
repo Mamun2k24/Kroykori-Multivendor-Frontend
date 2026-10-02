@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link } from "react-router-dom";
-import { FaStar } from "react-icons/fa";
+import { Link, useNavigate } from "react-router-dom";
+import { ShoppingCart } from "lucide-react";
 
 import useLoading from "../../../../hooks/useLoading";
 import ProductLoader from "../../../../Spinner/ProductLoader";
@@ -41,6 +41,7 @@ const imageVariants = {
 };
 
 const PopularProduct = () => {
+  const navigate = useNavigate();
   const { campaignActive } = useFlashSaleStatus();
   const [visibleProducts, setVisibleProducts] = useState(20);
 
@@ -68,6 +69,16 @@ const PopularProduct = () => {
     ? productsResponse
     : productsResponse?.items || [];
 
+  const handleOrderNow = (productId) => {
+    navigate(`/product-details/${productId}`);
+  };
+
+  const handleAddToCart = (e, productId) => {
+    e.preventDefault();
+    e.stopPropagation();
+    navigate(`/product-details/${productId}`);
+  };
+
   if (queryLoading) return <ProductLoader />;
 
   if (error) {
@@ -83,10 +94,9 @@ const PopularProduct = () => {
       <div className="bg-white pt-10 pb-6 font-quicksand">
         <div className="mx-auto flex max-w-7xl items-center justify-between border-b border-slate-100 px-4 pb-4">
           <div className="relative">
-             <h2 className="text-lg md:text-2xl font-bold text-slate-900 tracking-tight">
-                Popular Products
-              </h2>
-         
+            <h2 className="text-lg md:text-2xl font-bold text-slate-900 tracking-tight">
+              Popular Products
+            </h2>
             <div className="absolute -bottom-[10px] left-0 h-1 w-28 rounded-full bg-gradient-to-r from-[#A10D0D] to-[#FFC107]" />
           </div>
 
@@ -126,11 +136,15 @@ const PopularProduct = () => {
               const discount = flashEnabled
                 ? Number(product?.flashSale?.discountPercent || 0)
                 : regularPrice > price
-                  ? Math.round(((regularPrice - price) / regularPrice) * 100)
-                  : 0;
+                ? Math.round(((regularPrice - price) / regularPrice) * 100)
+                : 0;
 
               const isOutOfStock =
                 product?.status === "out_of_stock" || stockNumber === 0;
+
+              const isPreBook =
+                product?.preBook?.enabled === true &&
+                product?.preBook?.closed !== true;
 
               const imageSrc = Array.isArray(product?.productImage)
                 ? product.productImage[0]
@@ -139,6 +153,7 @@ const PopularProduct = () => {
               let badgeText = "";
               let badgeCls = "";
 
+              // 👈 Out of stock hole 1st priority-te OUT OF STOCK badge dekhabe
               if (isOutOfStock) {
                 badgeText = "OUT OF STOCK";
                 badgeCls = "bg-rose-500 text-white";
@@ -150,7 +165,7 @@ const PopularProduct = () => {
                 badgeCls = "bg-sky-400 text-white";
               } else if (idx % 3 === 0) {
                 badgeText = "HOT";
-                badgeCls = "bg-cyan-400 text-white";
+                badgeCls = "bg-[#F77426] text-white";
               }
 
               return (
@@ -159,13 +174,13 @@ const PopularProduct = () => {
                   variants={cardVariants}
                   initial="hidden"
                   animate="visible"
-                  whileHover={!isOutOfStock ? "hover" : undefined}
-                  whileTap={!isOutOfStock ? "tap" : undefined}
-                  className="group/card relative flex flex-col justify-between overflow-hidden rounded-3xl border border-slate-100 bg-white p-3"
+                  whileHover={!isOutOfStock || isPreBook ? "hover" : undefined}
+                  whileTap={!isOutOfStock || isPreBook ? "tap" : undefined}
+                  className="group/card relative flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-100 bg-white p-2.5 shadow-sm"
                 >
                   {badgeText && (
                     <div
-                      className={`absolute right-3 top-3 z-30 rounded-full px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider shadow-sm md:text-[10px] ${badgeCls}`}
+                      className={`absolute right-3 top-3 z-30 rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-wider shadow-sm md:text-[10px] ${badgeCls}`}
                     >
                       {badgeText}
                     </div>
@@ -173,7 +188,7 @@ const PopularProduct = () => {
 
                   <Link
                     to={`/product-details/${product._id}`}
-                    className="group relative block overflow-hidden rounded-2xl bg-slate-50/40 p-2"
+                    className="group relative block overflow-hidden rounded-xl bg-slate-50/40 p-2"
                   >
                     <div className="relative flex h-36 items-center justify-center overflow-hidden sm:h-44 md:h-48">
                       <motion.img
@@ -186,39 +201,32 @@ const PopularProduct = () => {
                     </div>
                   </Link>
 
-                  <div className="flex flex-1 flex-col justify-between pt-3">
+                  <div className="flex flex-1 flex-col justify-between pt-2.5">
                     <div className="space-y-1">
                       <Link to={`/product-details/${product._id}`}>
-                        <h3 className="line-clamp-2 min-h-[32px] text-xs font-bold leading-snug text-slate-800 transition hover:text-sky-500 sm:min-h-[40px] sm:text-sm">
+                        <h3 className="line-clamp-2 min-h-[32px] text-xs font-bold leading-snug text-slate-800 transition hover:text-[#F77426] sm:min-h-[38px] sm:text-sm">
                           {product.productName}
                         </h3>
                       </Link>
-
-                      {/* Eta niye ore kaj korbo */}
-                      {/* <div className="flex items-center gap-0.5 py-1 text-amber-400">
-                        {[...Array(5)].map((_, i) => (
-                          <FaStar key={i} className="h-3 w-3 fill-current" />
-                        ))}
-                      </div> */}
                     </div>
 
-                    <div className="mt-2.5">
+                    <div className="mt-2">
                       <div className="flex items-baseline gap-1.5">
-                        <span className="text-sm font-black text-rose-500 sm:text-base">
+                        <span className="text-sm font-black text-[#F77426] sm:text-base">
                           ৳{formatMoney(price)}
                         </span>
 
                         {regularPrice > price && (
-                          <span className="text-[10px] font-medium text-slate-300 line-through sm:text-xs">
+                          <span className="text-[10px] font-medium text-slate-400 line-through sm:text-xs">
                             ৳{formatMoney(regularPrice)}
                           </span>
                         )}
                       </div>
 
                       {!isOutOfStock && stockNumber > 0 && stockNumber < 20 && (
-                        <div className="mt-2">
+                        <div className="mt-1.5">
                           <div className="mb-0.5 text-[9px] font-bold text-orange-500">
-                            Only {stockNumber} units left!
+                            Only {stockNumber} left!
                           </div>
                           <div className="h-1 w-full overflow-hidden rounded-full bg-slate-100">
                             <div
@@ -226,7 +234,7 @@ const PopularProduct = () => {
                               style={{
                                 width: `${Math.min(
                                   (stockNumber / 20) * 100,
-                                  100,
+                                  100
                                 )}%`,
                               }}
                             />
@@ -234,20 +242,42 @@ const PopularProduct = () => {
                         </div>
                       )}
 
-                      <Link
-                        to={
-                          isOutOfStock
-                            ? `/product-details/${product._id}`
-                            : `/product-details/${product._id}`
-                        }
-                        className={`mt-3 flex h-9 w-full items-center justify-center rounded-full text-xs font-black transition-all ${
-                          isOutOfStock
-                            ? "bg-slate-100 text-slate-400"
-                            : "bg-[#F77426] text-white shadow-md shadow-orange-100 hover:bg-[#e0631a] hover:shadow-lg"
-                        }`}
-                      >
-                        {isOutOfStock ? "View Details" : "Add to Cart"}
-                      </Link>
+                      {/* ─── DYNAMIC BUTTON SECTION ─── */}
+                      <div className="mt-3 flex items-center gap-1.5">
+                        <button
+                          onClick={() => handleOrderNow(product._id)}
+                          disabled={isOutOfStock && !isPreBook}
+                          className={`flex-1 h-8 sm:h-9 rounded-lg text-xs font-bold transition-all flex items-center justify-center ${
+                            !isOutOfStock
+                              ? "bg-[#F77426] text-white hover:bg-[#e0631a] active:scale-95 shadow-sm"
+                              : isPreBook
+                              ? "bg-blue-600 text-white hover:bg-blue-700 active:scale-95 shadow-sm"
+                              : "bg-slate-100 text-slate-400 cursor-not-allowed"
+                          }`}
+                        >
+                          {!isOutOfStock
+                            ? "Order Now"
+                            : isPreBook
+                            ? "Pre-Book"
+                            : "Out of Stock"}
+                        </button>
+
+                        <button
+                          onClick={(e) => handleAddToCart(e, product._id)}
+                          disabled={isOutOfStock && !isPreBook}
+                          title={isPreBook ? "Pre-Book" : "Add to Cart"}
+                          className={`w-8 h-8 sm:w-9 sm:h-9 shrink-0 rounded-lg border flex items-center justify-center transition-all ${
+                            !isOutOfStock
+                              ? "border-[#F77426] text-[#F77426] hover:bg-orange-50 active:scale-95"
+                              : isPreBook
+                              ? "border-blue-600 text-blue-600 hover:bg-blue-50 active:scale-95"
+                              : "border-slate-200 text-slate-300 cursor-not-allowed"
+                          }`}
+                        >
+                          <ShoppingCart className="w-4 h-4" />
+                        </button>
+                      </div>
+
                     </div>
                   </div>
                 </motion.div>

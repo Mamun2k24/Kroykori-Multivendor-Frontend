@@ -644,12 +644,12 @@ Color: ${selectedColor || "N/A"}`;
                     </div>
                   )}
 
-                  {/* Quantity */}
-                  <div>
+                  {/* Quantity (Aligned in One Line) */}
+                  <div className="flex items-center gap-4">
                     <p className="text-sm font-semibold text-slate-800">
-                      Quantity
+                      Quantity:
                     </p>
-                    <div className="mt-2 inline-flex items-center rounded-md border border-slate-200 overflow-hidden bg-white">
+                    <div className="inline-flex items-center rounded-md border border-slate-200 overflow-hidden bg-white">
                       <button
                         type="button"
                         onClick={() => setQuantity((q) => Math.max(1, q - 1))}
@@ -666,12 +666,12 @@ Color: ${selectedColor || "N/A"}`;
                             Math.max(1, parseInt(e.target.value) || 1),
                           )
                         }
-                        className="w-16 h-11 text-center outline-none border-x border-slate-200 text-slate-900 font-semibold"
+                        className="w-16 h-9 text-center outline-none border-x border-slate-200 text-slate-900 font-semibold"
                       />
                       <button
                         type="button"
                         onClick={() => setQuantity((q) => q + 1)}
-                        className="w-11 h-11 grid place-items-center bg-slate-50 text-sm font-bold text-slate-800 hover:bg-slate-100 transition"
+                        className="w-9 h-9 grid place-items-center bg-slate-50 text-sm font-bold text-slate-800 hover:bg-slate-100 transition"
                         aria-label="Increase quantity"
                       >
                         +
@@ -787,7 +787,7 @@ Color: ${selectedColor || "N/A"}`;
               {activeTab === "description" && (
                 <>
                   {longDetails ? (
-                    <div className="rounded-xl border border-slate-200 bg-white p-4">
+                    <div className="rounded-xl">
                       <h4 className="mb-3 text-sm font-semibold text-slate-900">
                         Product Description
                       </h4>

@@ -713,7 +713,7 @@ Color: ${selectedColor || "N/A"}`;
                         disabled={!inStock}
                         className={`px-4 py-3 rounded-md font-semibold text-white transition ${
                           inStock
-                            ? "bg-slate-950 hover:bg-slate-800"
+                            ? "bg-[#91333b] hover:bg-[#9B434B]"
                             : "bg-gray-400 cursor-not-allowed opacity-95"
                         }`}
                       >
@@ -773,7 +773,7 @@ Color: ${selectedColor || "N/A"}`;
                     className={`px-4 py-2 rounded text-sm font-semibold transition
             ${
               active
-                ? "bg-slate-900 text-white"
+                ? "bg-[#9B434B] text-white"
                 : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"
             }`}
                   >
@@ -879,7 +879,7 @@ Color: ${selectedColor || "N/A"}`;
                     disabled={!inStock}
                     className={`py-3 rounded-md font-semibold text-white transition text-sm ${
                       inStock
-                        ? "bg-slate-950 hover:bg-slate-800"
+                        ? "bg-[#9D4249] hover:bg-[#9D4249]/90"
                         : "bg-gray-400 cursor-not-allowed opacity-90"
                     }`}
                   >

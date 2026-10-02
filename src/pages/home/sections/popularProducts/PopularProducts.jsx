@@ -91,7 +91,7 @@ const PopularProduct = () => {
 
   return (
     <>
-      <div className="bg-white pt-10 pb-6 font-quicksand">
+      <div className="bg-white md:pt-6 pt-0 md:pb-2 pb-0 font-quicksand">
         <div className="mx-auto flex max-w-7xl items-center justify-between border-b border-slate-100 px-4 pb-4">
           <div className="relative">
             <h2 className="text-lg md:text-2xl font-bold text-slate-900 tracking-tight">
@@ -109,7 +109,7 @@ const PopularProduct = () => {
         </div>
       </div>
 
-      <section className="mx-auto max-w-7xl px-2 pb-16 pt-4 md:px-4 font-quicksand">
+      <section className="mx-auto max-w-7xl px-2 md:pb-6 pb-4 pt-4 md:px-4 font-quicksand">
         <motion.div
           variants={containerVariants}
           initial="hidden"

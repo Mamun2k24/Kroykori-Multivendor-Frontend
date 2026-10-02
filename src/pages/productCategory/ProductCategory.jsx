@@ -68,7 +68,7 @@ const ProductCategory = () => {
   }
 
   return (
-    <section className="py-6 bg-white overflow-hidden font-quicksand">
+    <section className="py-5 bg-white overflow-hidden font-quicksand">
       <div className="max-w-7xl mx-auto px-4">
         
         {/* Heading Section */}

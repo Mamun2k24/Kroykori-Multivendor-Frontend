@@ -155,7 +155,7 @@ function HeaderMobile({
         {/* ইমেজের ডিজাইন অনুযায়ী কাস্টমাইজড সার্চ বার */}
         <div className="px-3 pb-3 relative">
           <form onSubmit={onSubmitSearch}>
-            <div className="flex items-center w-full bg-[#F77426] p-1.5 rounded-md shadow-sm">
+            <div className="flex items-center w-full bg-[#F77426] p-1 rounded-md shadow-sm">
               <div className="flex-1 flex items-center bg-white rounded-l-md h-10 px-3">
                 <input
                   type="text"
@@ -167,7 +167,7 @@ function HeaderMobile({
               </div>
               <button
                 type="submit"
-                className="bg-[#111111] hover:bg-black text-white h-10 px-4 rounded-r-md flex items-center justify-center transition-colors"
+                className="bg-[#8B0B0B] hover:bg-[#8B0B0B]/90 text-white h-10 px-4 rounded-r-md flex items-center justify-center transition-colors"
               >
                 <FiSearch className="text-white text-lg" />
               </button>

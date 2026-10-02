@@ -118,7 +118,7 @@ const RelatedProduct = ({ categoryName, excludeId }) => {
       </div>
 
       {/* ================== PRODUCT GRID INFRASTRUCTURE ================== */}
-      <section className="max-w-7xl mx-auto px-2 md:px-4 pb-16 pt-4">
+      <section className="max-w-7xl mx-auto px-2 md:px-4 pb-6 pt-4">
         <motion.div
           variants={containerVariants}
           initial="hidden"

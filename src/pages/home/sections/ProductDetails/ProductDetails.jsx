@@ -42,12 +42,11 @@ export default function ProductDetails() {
   const userId = user?.id;
   const guestId = getGuestId();
 
-  // 👈 সঠিকভাবে আপডেট করা ব্যাক ফাংশন
   const handleGoBack = () => {
     if (window.history.state && window.history.state.idx > 0) {
-      navigate(-1); // অ্যাপের আগের পেজে ফেরত যাবে
+      navigate(-1);
     } else {
-      navigate("/"); // সরাসরি লিঙ্কে ঢুকলে হোমপেজে যাবে
+      navigate("/");
     }
   };
 
@@ -94,7 +93,6 @@ export default function ProductDetails() {
   useEffect(() => {
     if (!_id) return;
 
-    // Reviews আগে load হয়ে যাবে
     qc.prefetchQuery({
       queryKey: ["reviews", _id],
       queryFn: async () => {
@@ -105,7 +103,6 @@ export default function ProductDetails() {
     });
   }, [_id, qc]);
 
-  /* ---------- derived ---------- */
   const finalPrice = useMemo(() => {
     if (flashSale?.enabled) {
       return Number(flashSale.salePrice || price);
@@ -183,7 +180,6 @@ export default function ProductDetails() {
     color,
   ]);
 
-  /* ---------- add to cart ---------- */
   const { mutate: addToCart } = useMutation({
     mutationFn: async (payload) => {
       const res = await axios.post(
@@ -329,7 +325,6 @@ Color: ${selectedColor || "N/A"}`;
     window.location.href = `tel:${phoneNumber}`;
   };
 
-  /* ---------- slider ---------- */
   const settings = {
     customPaging: (i) => (
       <a>
@@ -348,9 +343,6 @@ Color: ${selectedColor || "N/A"}`;
     slidesToScroll: 1,
   };
 
-  const ratingValue = Number(ratings || 0);
-
-  /* ---------- inline highlights (chips) ---------- */
   const highlightPairs = useMemo(() => {
     const wanted = new Set(["Brand", "SKU", "Category", "Stock"]);
     return specs.filter(([k]) => wanted.has(k)).slice(0, 4);
@@ -361,7 +353,6 @@ Color: ${selectedColor || "N/A"}`;
       <div className="bg-gradient-to-br from-slate-50 via-white to-slate-50">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-10 py-5 sm:py-8 lg:py-10">
           
-          {/* 👈 ব্যাক বাটন UI */}
           <button
             onClick={handleGoBack}
             type="button"
@@ -422,7 +413,6 @@ Color: ${selectedColor || "N/A"}`;
                 </div>
               </div>
 
-              {/* mobile short details */}
               {details && (
                 <p className="mt-4 text-sm text-slate-700 leading-relaxed lg:hidden">
                   {details}
@@ -437,53 +427,10 @@ Color: ${selectedColor || "N/A"}`;
                   <h1 className="text-xl sm:text-2xl lg:text-3xl font-semibold tracking-tight text-slate-900 leading-snug">
                     {productName}
                   </h1>
-
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-                    {sku && (
-                      <span className="text-slate-500">
-                        SKU:{" "}
-                        <span className="font-medium text-slate-700">
-                          {sku}
-                        </span>
-                      </span>
-                    )}
-                    {brand && (
-                      <span className="text-slate-500">
-                        Brand:{" "}
-                        <span className="font-medium text-slate-700">
-                          {brand}
-                        </span>
-                      </span>
-                    )}
-                    {categoryName && (
-                      <span className="text-slate-500">
-                        Category:{" "}
-                        <span className="font-semibold text-blue-600">
-                          {categoryName}
-                        </span>
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-2 mt-1">
-                    {isPreBook ? (
-                      <span className="ml-2 inline-flex items-center rounded-full bg-blue-50 text-blue-700 text-xs font-semibold px-2.5 py-1">
-                        Pre Book Available
-                      </span>
-                    ) : inStock ? (
-                      <span className="ml-2 inline-flex items-center rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold px-2.5 py-1">
-                        In stock
-                      </span>
-                    ) : (
-                      <span className="ml-2 inline-flex items-center rounded-full bg-rose-50 text-rose-700 text-xs font-semibold px-2.5 py-1">
-                        Out of stock
-                      </span>
-                    )}
-                  </div>
                 </div>
 
-                {/* Price */}
-                <div className="mt-5 flex items-center gap-3 flex-wrap">
+                {/* Price & Stock Badge in One Line */}
+                <div className="mt-3 flex items-center gap-3 flex-wrap">
                   <div className="text-2xl sm:text-3xl font-bold text-red-600">
                     {money(finalPrice)}
                   </div>
@@ -505,6 +452,22 @@ Color: ${selectedColor || "N/A"}`;
                       {money(price)}
                     </div>
                   )}
+
+                  <div className="flex items-center">
+                    {isPreBook ? (
+                      <span className="inline-flex items-center rounded-full bg-blue-50 text-blue-700 text-xs font-semibold px-2.5 py-1">
+                        Pre Book Available
+                      </span>
+                    ) : inStock ? (
+                      <span className="inline-flex items-center rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold px-2.5 py-1">
+                        In stock
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center rounded-full bg-rose-50 text-rose-700 text-xs font-semibold px-2.5 py-1">
+                        Out of stock
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 {/* Expected Delivery */}
@@ -524,7 +487,7 @@ Color: ${selectedColor || "N/A"}`;
                   </div>
                 )}
 
-                {/* Highlights upore (chips) */}
+                {/* Highlights */}
                 {highlightPairs.length > 0 && (
                   <div className="mt-5">
                     <p className="text-sm font-semibold text-slate-900 mb-2">
@@ -557,7 +520,6 @@ Color: ${selectedColor || "N/A"}`;
                   </div>
                 )}
 
-                {/* desktop short details */}
                 {details && (
                   <p className="mt-4 text-sm text-slate-700 leading-relaxed hidden lg:block">
                     {details}
@@ -677,6 +639,7 @@ Color: ${selectedColor || "N/A"}`;
                       </div>
                     </div>
                   )}
+
                   {/* Quantity */}
                   <div>
                     <p className="text-sm font-semibold text-slate-800">
@@ -785,7 +748,7 @@ Color: ${selectedColor || "N/A"}`;
                 </div>
 
                 <p className="mt-4 text-xs text-slate-500 sm:hidden">
-                  Tip: Choose required options before checkout.
+                  টিপস: চেকআউট করার আগে প্রয়োজনীয় অপশনগুলো নির্বাচন করুন।
                 </p>
               </div>
             </div>
@@ -871,7 +834,6 @@ Color: ${selectedColor || "N/A"}`;
         {/* Mobile sticky action bar */}
         <div className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200 shadow-lg">
           <div className="px-3 py-3">
-            {/* Total */}
             <div className="flex items-center justify-between mb-3">
               <div>
                 <p className="text-xs text-slate-500">Total</p>
@@ -881,7 +843,6 @@ Color: ${selectedColor || "N/A"}`;
               </div>
             </div>
 
-            {/* Buttons */}
             <div className="grid grid-cols-2 gap-2">
               {isPreBook ? (
                 <button
@@ -923,7 +884,6 @@ Color: ${selectedColor || "N/A"}`;
                 </>
               )}
 
-              {/* WhatsApp */}
               <button
                 onClick={handleWhatsAppOrder}
                 disabled={!inStock && !isPreBook}
@@ -937,7 +897,6 @@ Color: ${selectedColor || "N/A"}`;
                 {inStock || isPreBook ? "WhatsApp" : "Unavailable"}
               </button>
 
-              {/* Call */}
               <button
                 onClick={handleCallOrder}
                 disabled={!inStock && !isPreBook}

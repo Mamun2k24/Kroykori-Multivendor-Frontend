@@ -1,6 +1,6 @@
 // src/router/Router.jsx
-import { createBrowserRouter, Navigate } from "react-router-dom";
-import { lazy, Suspense } from "react";
+import { createBrowserRouter, Navigate, useLocation } from "react-router-dom";
+import { lazy, Suspense, useEffect } from "react";
 
 // 👑 Core Layouts & Route Guards (এগুলো নরমাল ইম্পোর্ট থাকবে)
 import MainLayout from "../layout/MainLayout";
@@ -12,7 +12,26 @@ import CustomerOrderDetails from "../pages/user/CustomerOrderDetails";
 import LandingPages from "../pages/dashboard/LandingPages";
 import PreBookOrders from "../components/ui/PreBookOrders";
 
-// 🚀 ALL Core Pages Lazy Loaded (হোমপেজ বান্ডেল ছোট করার জন্য)
+// 🚀 Global ScrollToTop Component
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, [pathname]);
+
+  return null;
+};
+
+// Layout Wrapper with ScrollToTop
+const WithScroll = ({ children }) => (
+  <>
+    <ScrollToTop />
+    {children}
+  </>
+);
+
+// 🚀 ALL Core Pages Lazy Loaded
 const Home = lazy(() => import("../pages/home/Home"));
 const ProductDetails = lazy(
   () => import("../pages/home/sections/ProductDetails/ProductDetails"),
@@ -31,9 +50,6 @@ const CartCheckout = lazy(() => import("../pages/checkOut/CartCheckout"));
 const Otp = lazy(() => import("../components/Otp"));
 const Buynow = lazy(() => import("../components/Buynow"));
 const AllOrders = lazy(() => import("../components/AllOrders"));
-// const PreBookOrders = lazy(
-//  () => import("../components/ui/PreBookOrders")
-// );
 const HeroUpload = lazy(() => import("../components/HeroUpload"));
 const AdminVideoManager = lazy(
   () => import("../pages/admin/AdminVideoManager"),
@@ -198,336 +214,346 @@ const loadable = (Component) => (
   </Suspense>
 );
 
-export const router = createBrowserRouter([
-  { path: "/admin-login", element: loadable(AdminLoginPage) },
+export const router = createBrowserRouter(
+  [
+    { path: "/admin-login", element: loadable(AdminLoginPage) },
+    {
+      path: "/",
+      element: (
+        <WithScroll>
+          <MainLayout />
+        </WithScroll>
+      ),
+      children: [
+        { index: true, element: loadable(Home) },
+        { path: "admin/login", element: loadable(AdminLoginPage) },
+        { path: "search", element: loadable(SearchResults) },
+        {
+          path: "lp/:slug",
+          element: loadable(LandingPageView),
+        },
+        {
+          path: "shop/:slug",
+          element: loadable(PublicShopPage),
+        },
+        {
+          path: "product-details/:id",
+          element: loadable(ProductDetails),
+          loader: ({ params }) => fetch(withBase(`api/products/${params.id}`)),
+        },
+        { path: "/about", element: loadable(KroyKoriAboutPage) },
+        { path: "/contact", element: loadable(KroyKoriContactPage) },
+        { path: "/order-success", element: loadable(OrderSuccess) },
+        {
+          path: "/categories",
+          element: loadable(AllCategories),
+        },
+        { path: "category/:slug", element: loadable(SectionCategoriDetails) },
+        {
+          path: "category/:slug/:subSlug",
+          element: loadable(SectionCategoriDetails),
+        },
+
+        // Auth & Checkout
+        { path: "login", element: loadable(Signup) },
+        { path: "otp-verify", element: loadable(Otp) },
+        { path: "/forgot-password", element: loadable(ForgotPassword) },
+        { path: "cart-checkout", element: loadable(CartCheckout) },
+        { path: "cart", element: loadable(Cart) },
+        { path: "buy-checkout", element: loadable(Buynow) },
+        { path: "producttwo", element: loadable(Producttwo) },
+        {
+          path: "guest-order/:orderId",
+          element: loadable(GuestOrderDetails),
+        },
+        { path: "/all-product", element: loadable(AllProductsHeader) },
+      ],
+    },
+
+    // DASHBOARD
+    {
+      path: "dashboard",
+      element: (
+        <WithScroll>
+          {loadable(Dashboard)}
+        </WithScroll>
+      ),
+      children: [
+        {
+          index: true,
+          element: <AdminRoute>{loadable(DashbrodAdmin)}</AdminRoute>,
+        },
+
+        // ---- ADMIN ONLY ----
+        {
+          path: "orders",
+          element: <AdminRoute>{loadable(AllOrders)}</AdminRoute>,
+        },
+        {
+          path: "pre-book-orders",
+          element: <AdminRoute>{loadable(PreBookOrders)}</AdminRoute>,
+        },
+        {
+          path: "hero",
+          element: <AdminRoute>{loadable(HeroUpload)}</AdminRoute>,
+        },
+        {
+          path: "video",
+          element: <AdminRoute>{loadable(AdminVideoManager)}</AdminRoute>,
+        },
+        {
+          path: "product",
+          element: <AdminRoute>{loadable(Product)}</AdminRoute>,
+        },
+        {
+          path: "category",
+          element: <AdminRoute>{loadable(Category)}</AdminRoute>,
+        },
+        {
+          path: "stock-management",
+          element: <AdminRoute>{loadable(StockManagement)}</AdminRoute>,
+        },
+        {
+          path: "admin/seller-applications",
+          element: <AdminRoute>{loadable(AdminSellerApplications)}</AdminRoute>,
+        },
+        {
+          path: "admin/shops",
+          element: <AdminRoute>{loadable(AdminShops)}</AdminRoute>,
+        },
+        {
+          path: "admin/seller-products",
+          element: <AdminRoute>{loadable(AdminSellerProducts)}</AdminRoute>,
+        },
+        {
+          path: "admin/seller-orders",
+          element: <AdminRoute>{loadable(AdminSellerOrders)}</AdminRoute>,
+        },
+        {
+          path: "admin/payouts",
+          element: <AdminRoute>{loadable(AdminSellerPayouts)}</AdminRoute>,
+        },
+        {
+          path: "admin/seller-transactions",
+          element: <AdminRoute>{loadable(AdminSellerTransactions)}</AdminRoute>,
+        },
+        {
+          path: "admin/returns",
+          element: <AdminRoute>{loadable(AdminReturnRequests)}</AdminRoute>,
+        },
+        {
+          path: "admin/marketplace",
+          element: <AdminRoute>{loadable(AdminMarketplaceDashboard)}</AdminRoute>,
+        },
+        {
+          path: "admin/seller-performance",
+          element: <AdminRoute>{loadable(AdminSellerPerformance)}</AdminRoute>,
+        },
+        {
+          path: "shipped-orders",
+          element: <AdminRoute>{loadable(ShippedOrders)}</AdminRoute>,
+        },
+        {
+          path: "admin/notifications",
+          element: <AdminRoute>{loadable(AdminNotifications)}</AdminRoute>,
+        },
+
+        { path: "color", element: <AdminRoute>{loadable(Color)}</AdminRoute> },
+        {
+          path: "brands",
+          element: <AdminRoute>{loadable(AdminBrands)}</AdminRoute>,
+        },
+        { path: "user", element: <AdminRoute>{loadable(User)}</AdminRoute> },
+        { path: "review", element: <AdminRoute>{loadable(Review)}</AdminRoute> },
+        {
+          path: "invoices",
+          element: <AdminRoute>{loadable(AdminInvoices)}</AdminRoute>,
+        },
+        {
+          path: "coupon",
+          element: <AdminRoute>{loadable(AdminCoupons)}</AdminRoute>,
+        },
+        {
+          path: "flash-sale",
+          element: <AdminRoute>{loadable(FlashSaleDashboard)}</AdminRoute>,
+        },
+        {
+          path: "landing-pages",
+          element: <AdminRoute>{loadable(LandingPages)}</AdminRoute>,
+        },
+        {
+          path: "landing-pages/create",
+          element: <AdminRoute>{loadable(CreateLandingPage)}</AdminRoute>,
+        },
+        {
+          path: "landing-pages/edit/:id",
+          element: <AdminRoute>{loadable(EditLandingPage)}</AdminRoute>,
+        },
+        {
+          path: "shiping",
+          element: <AdminRoute>{loadable(AdminShippingSettings)}</AdminRoute>,
+        },
+        {
+          path: "categories",
+          element: <AdminRoute>{loadable(AdminCategories)}</AdminRoute>,
+        },
+        {
+          path: "subcategories",
+          element: <AdminRoute>{loadable(AdminSubCategory)}</AdminRoute>,
+        },
+        {
+          path: "setting-logo",
+          element: <AdminRoute>{loadable(LogoSettings)}</AdminRoute>,
+        },
+        {
+          path: "setting-section",
+          element: <AdminRoute>{loadable(SettingHomeSection)}</AdminRoute>,
+        },
+        {
+          path: "setting-header",
+          element: <AdminRoute>{loadable(HeaderSectionSettings)}</AdminRoute>,
+        },
+        {
+          path: "setting-ticker",
+          element: <AdminRoute>{loadable(AdminTickerSettings)}</AdminRoute>,
+        },
+        {
+          path: "setting-shipping",
+          element: <AdminRoute>{loadable(AdminShippingSettings)}</AdminRoute>,
+        },
+        {
+          path: "general-setting",
+          element: <AdminRoute>{loadable(GeneralSetting)}</AdminRoute>,
+        },
+        {
+          path: "confirm-orders",
+          element: <AdminRoute>{loadable(ConfirmOrders)}</AdminRoute>,
+        },
+
+        {
+          path: "delivery-orders",
+          element: <AdminRoute>{loadable(DeliveredOrders)}</AdminRoute>,
+        },
+        {
+          path: "cancel-orders",
+          element: <AdminRoute>{loadable(CancelOrders)}</AdminRoute>,
+        },
+        {
+          path: "sales-report",
+          element: <AdminRoute>{loadable(SalesReport)}</AdminRoute>,
+        },
+        {
+          path: "chat",
+          element: <AdminRoute>{loadable(AdminChatInbox)}</AdminRoute>,
+        },
+        {
+          path: "chatbot-questions",
+          element: <AdminRoute>{loadable(AdminChatbotQuestions)}</AdminRoute>,
+        },
+
+        // ---- SELLER ONLY ----
+        {
+          path: "seller",
+          element: <SellerRoute>{loadable(SellerDashboardHome)}</SellerRoute>,
+        },
+        {
+          path: "seller/shop",
+          element: <SellerRoute>{loadable(SellerShopProfile)}</SellerRoute>,
+        },
+        {
+          path: "seller/products",
+          element: <SellerRoute>{loadable(SellerProductList)}</SellerRoute>,
+        },
+        {
+          path: "seller/products/add",
+          element: <SellerRoute>{loadable(SellerAddProduct)}</SellerRoute>,
+        },
+        {
+          path: "seller/products/:id/edit",
+          element: <SellerRoute>{loadable(SellerEditProduct)}</SellerRoute>,
+        },
+        {
+          path: "seller/orders",
+          element: <SellerRoute>{loadable(SellerOrderList)}</SellerRoute>,
+        },
+        {
+          path: "order/:orderId",
+          element: <ShareRoute>{loadable(CustomerOrderDetails)}</ShareRoute>,
+        },
+        {
+          path: "seller/orders/:orderId/:sellerOrderId",
+          element: <SellerRoute>{loadable(SellerOrderDetails)}</SellerRoute>,
+        },
+        {
+          path: "seller/wallet",
+          element: <SellerRoute>{loadable(SellerWallet)}</SellerRoute>,
+        },
+        {
+          path: "seller/returns",
+          element: <SellerRoute>{loadable(SellerReturns)}</SellerRoute>,
+        },
+        {
+          path: "seller/transactions",
+          element: <SellerRoute>{loadable(SellerTransactions)}</SellerRoute>,
+        },
+        {
+          path: "seller/notifications",
+          element: <SellerRoute>{loadable(SellerNotifications)}</SellerRoute>,
+        },
+
+        // ---- USER & SELLER SHARED ----
+        {
+          path: "cart",
+          element: <ShareRoute>{loadable(Cart)}</ShareRoute>,
+        },
+        {
+          path: "profile",
+          element: (
+            <ShareRoute>
+              <Suspense
+                fallback={
+                  <div className="p-4 text-center text-gray-500">
+                    Loading Profile...
+                  </div>
+                }
+              >
+                <MyProfile />
+              </Suspense>
+            </ShareRoute>
+          ),
+        },
+        {
+          path: "order",
+          element: <ShareRoute>{loadable(Order)}</ShareRoute>,
+        },
+        {
+          path: "my-returns",
+          element: <ShareRoute>{loadable(MyReturns)}</ShareRoute>,
+        },
+        {
+          path: "/dashboard/verification",
+          element: <UserRoute>{loadable(SellerVerificationForm)}</UserRoute>,
+        },
+        {
+          path: "my-invoices",
+          element: <ShareRoute>{loadable(MyInvoices)}</ShareRoute>,
+        },
+        {
+          path: "setting",
+          element: <ShareRoute>{loadable(ChangePassword)}</ShareRoute>,
+        },
+        {
+          path: "wishlist",
+          element: <ShareRoute>{loadable(Wishlist)}</ShareRoute>,
+        },
+      ],
+    },
+    {
+      path: "*",
+      element: loadable(ErrorPage),
+    },
+  ],
   {
-    path: "/",
-    element: <MainLayout />,
-    children: [
-      { index: true, element: loadable(Home) }, // 👈 এখন সম্পূর্ণ Lazy
-      { path: "admin/login", element: loadable(AdminLoginPage) },
-      { path: "search", element: loadable(SearchResults) },
-      {
-        path: "lp/:slug",
-        element: loadable(LandingPageView),
-      },
-      {
-        path: "shop/:slug",
-        element: loadable(PublicShopPage),
-      },
-      {
-        path: "product-details/:id",
-        element: loadable(ProductDetails),
-        loader: ({ params }) => fetch(withBase(`api/products/${params.id}`)),
-      },
-      { path: "/about", element: loadable(KroyKoriAboutPage) },
-      { path: "/contact", element: loadable(KroyKoriContactPage) },
-      { path: "/order-success", element: loadable(OrderSuccess) },
-      {
-        path: "/categories",
-        element: loadable(AllCategories),
-      },
-      { path: "category/:slug", element: loadable(SectionCategoriDetails) },
-      {
-        path: "category/:slug/:subSlug",
-        element: loadable(SectionCategoriDetails),
-      },
-
-      // Auth & Checkout (এগুলোও এখন Lazy)
-      { path: "login", element: loadable(Signup) },
-      { path: "otp-verify", element: loadable(Otp) },
-      { path: "/forgot-password", element: loadable(ForgotPassword) },
-      { path: "cart-checkout", element: loadable(CartCheckout) },
-      { path: "cart", element: loadable(Cart) },
-      { path: "buy-checkout", element: loadable(Buynow) },
-      { path: "producttwo", element: loadable(Producttwo) },
-      {
-        path: "guest-order/:orderId",
-        element: loadable(GuestOrderDetails),
-      },
-      { path: "/all-product", element: loadable(AllProductsHeader) },
-    ],
-  },
-
-  // DASHBOARD
-  {
-    path: "dashboard",
-    element: loadable(Dashboard),
-    children: [
-      {
-        index: true,
-        element: <AdminRoute>{loadable(DashbrodAdmin)}</AdminRoute>,
-      },
-
-      // ---- ADMIN ONLY ----
-      {
-        path: "orders",
-        element: <AdminRoute>{loadable(AllOrders)}</AdminRoute>,
-      },
-      {
-        path: "pre-book-orders",
-        element: <AdminRoute>{loadable(PreBookOrders)}</AdminRoute>,
-      },
-      {
-        path: "hero",
-        element: <AdminRoute>{loadable(HeroUpload)}</AdminRoute>,
-      },
-      {
-        path: "video",
-        element: <AdminRoute>{loadable(AdminVideoManager)}</AdminRoute>,
-      },
-      {
-        path: "product",
-        element: <AdminRoute>{loadable(Product)}</AdminRoute>,
-      },
-      {
-        path: "category",
-        element: <AdminRoute>{loadable(Category)}</AdminRoute>,
-      },
-      {
-        path: "stock-management",
-        element: <AdminRoute>{loadable(StockManagement)}</AdminRoute>,
-      },
-      {
-        path: "admin/seller-applications",
-        element: <AdminRoute>{loadable(AdminSellerApplications)}</AdminRoute>,
-      },
-      {
-        path: "admin/shops",
-        element: <AdminRoute>{loadable(AdminShops)}</AdminRoute>,
-      },
-      {
-        path: "admin/seller-products",
-        element: <AdminRoute>{loadable(AdminSellerProducts)}</AdminRoute>,
-      },
-      {
-        path: "admin/seller-orders",
-        element: <AdminRoute>{loadable(AdminSellerOrders)}</AdminRoute>,
-      },
-      {
-        path: "admin/payouts",
-        element: <AdminRoute>{loadable(AdminSellerPayouts)}</AdminRoute>,
-      },
-      {
-        path: "admin/seller-transactions",
-        element: <AdminRoute>{loadable(AdminSellerTransactions)}</AdminRoute>,
-      },
-      {
-        path: "admin/returns",
-        element: <AdminRoute>{loadable(AdminReturnRequests)}</AdminRoute>,
-      },
-      {
-        path: "admin/marketplace",
-        element: <AdminRoute>{loadable(AdminMarketplaceDashboard)}</AdminRoute>,
-      },
-      {
-        path: "admin/seller-performance",
-        element: <AdminRoute>{loadable(AdminSellerPerformance)}</AdminRoute>,
-      },
-      {
-        path: "shipped-orders",
-        element: <AdminRoute>{loadable(ShippedOrders)}</AdminRoute>,
-      },
-      {
-        path: "admin/notifications",
-        element: <AdminRoute>{loadable(AdminNotifications)}</AdminRoute>,
-      },
-
-      { path: "color", element: <AdminRoute>{loadable(Color)}</AdminRoute> },
-      {
-        path: "brands",
-        element: <AdminRoute>{loadable(AdminBrands)}</AdminRoute>,
-      },
-      { path: "user", element: <AdminRoute>{loadable(User)}</AdminRoute> },
-      { path: "review", element: <AdminRoute>{loadable(Review)}</AdminRoute> },
-      {
-        path: "invoices",
-        element: <AdminRoute>{loadable(AdminInvoices)}</AdminRoute>,
-      },
-      {
-        path: "coupon",
-        element: <AdminRoute>{loadable(AdminCoupons)}</AdminRoute>,
-      },
-      {
-        path: "flash-sale",
-        element: <AdminRoute>{loadable(FlashSaleDashboard)}</AdminRoute>,
-      },
-      {
-        path: "landing-pages",
-        element: <AdminRoute>{loadable(LandingPages)}</AdminRoute>,
-      },
-      {
-        path: "landing-pages/create",
-        element: <AdminRoute>{loadable(CreateLandingPage)}</AdminRoute>,
-      },
-      {
-        path: "landing-pages/edit/:id",
-        element: <AdminRoute>{loadable(EditLandingPage)}</AdminRoute>,
-      },
-      {
-        path: "shiping",
-        element: <AdminRoute>{loadable(AdminShippingSettings)}</AdminRoute>,
-      },
-      {
-        path: "categories",
-        element: <AdminRoute>{loadable(AdminCategories)}</AdminRoute>,
-      },
-      {
-        path: "subcategories",
-        element: <AdminRoute>{loadable(AdminSubCategory)}</AdminRoute>,
-      },
-      {
-        path: "setting-logo",
-        element: <AdminRoute>{loadable(LogoSettings)}</AdminRoute>,
-      },
-      {
-        path: "setting-section",
-        element: <AdminRoute>{loadable(SettingHomeSection)}</AdminRoute>,
-      },
-      {
-        path: "setting-header",
-        element: <AdminRoute>{loadable(HeaderSectionSettings)}</AdminRoute>,
-      },
-      {
-        path: "setting-ticker",
-        element: <AdminRoute>{loadable(AdminTickerSettings)}</AdminRoute>,
-      },
-      {
-        path: "setting-shipping",
-        element: <AdminRoute>{loadable(AdminShippingSettings)}</AdminRoute>,
-      },
-      {
-        path: "general-setting",
-        element: <AdminRoute>{loadable(GeneralSetting)}</AdminRoute>,
-      },
-      {
-        path: "confirm-orders",
-        element: <AdminRoute>{loadable(ConfirmOrders)}</AdminRoute>,
-      },
-
-      {
-        path: "delivery-orders",
-        element: <AdminRoute>{loadable(DeliveredOrders)}</AdminRoute>,
-      },
-      {
-        path: "cancel-orders",
-        element: <AdminRoute>{loadable(CancelOrders)}</AdminRoute>,
-      },
-      {
-        path: "sales-report",
-        element: <AdminRoute>{loadable(SalesReport)}</AdminRoute>,
-      },
-      {
-        path: "chat",
-        element: <AdminRoute>{loadable(AdminChatInbox)}</AdminRoute>,
-      },
-      {
-        path: "chatbot-questions",
-        element: <AdminRoute>{loadable(AdminChatbotQuestions)}</AdminRoute>,
-      },
-
-      // ---- SELLER ONLY ----
-      {
-        path: "seller",
-        element: <SellerRoute>{loadable(SellerDashboardHome)}</SellerRoute>,
-      },
-      {
-        path: "seller/shop",
-        element: <SellerRoute>{loadable(SellerShopProfile)}</SellerRoute>,
-      },
-      {
-        path: "seller/products",
-        element: <SellerRoute>{loadable(SellerProductList)}</SellerRoute>,
-      },
-      {
-        path: "seller/products/add",
-        element: <SellerRoute>{loadable(SellerAddProduct)}</SellerRoute>,
-      },
-      {
-        path: "seller/products/:id/edit",
-        element: <SellerRoute>{loadable(SellerEditProduct)}</SellerRoute>,
-      },
-      {
-        path: "seller/orders",
-        element: <SellerRoute>{loadable(SellerOrderList)}</SellerRoute>,
-      },
-      {
-        path: "order/:orderId",
-        element: <ShareRoute>{loadable(CustomerOrderDetails)}</ShareRoute>,
-      },
-      {
-        path: "seller/orders/:orderId/:sellerOrderId",
-        element: <SellerRoute>{loadable(SellerOrderDetails)}</SellerRoute>,
-      },
-      {
-        path: "seller/wallet",
-        element: <SellerRoute>{loadable(SellerWallet)}</SellerRoute>,
-      },
-      {
-        path: "seller/returns",
-        element: <SellerRoute>{loadable(SellerReturns)}</SellerRoute>,
-      },
-      {
-        path: "seller/transactions",
-        element: <SellerRoute>{loadable(SellerTransactions)}</SellerRoute>,
-      },
-      {
-        path: "seller/notifications",
-        element: <SellerRoute>{loadable(SellerNotifications)}</SellerRoute>,
-      },
-      {
-        path: "order/:orderId",
-        element: <ShareRoute>{loadable(CustomerOrderDetails)}</ShareRoute>,
-      },
-      // ---- USER & SELLER SHARED ----
-      {
-        path: "cart",
-        element: <ShareRoute>{loadable(Cart)}</ShareRoute>,
-      },
-      {
-        path: "profile",
-        element: (
-          <ShareRoute>
-            <Suspense
-              fallback={
-                <div className="p-4 text-center text-gray-500">
-                  Loading Profile...
-                </div>
-              }
-            >
-              <MyProfile />
-            </Suspense>
-          </ShareRoute>
-        ), // 👈 প্রোফাইলের এরর দূর করার জন্য ইনলাইন সাসপেন্স দেওয়া হলো
-      },
-      {
-        path: "order",
-        element: <ShareRoute>{loadable(Order)}</ShareRoute>,
-      },
-      {
-        path: "my-returns",
-        element: <ShareRoute>{loadable(MyReturns)}</ShareRoute>,
-      },
-      {
-        path: "/dashboard/verification",
-        element: <UserRoute>{loadable(SellerVerificationForm)}</UserRoute>,
-      },
-      {
-        path: "my-invoices",
-        element: <ShareRoute>{loadable(MyInvoices)}</ShareRoute>,
-      },
-      {
-        path: "setting",
-        element: <ShareRoute>{loadable(ChangePassword)}</ShareRoute>,
-      },
-      {
-        path: "wishlist",
-        element: <ShareRoute>{loadable(Wishlist)}</ShareRoute>,
-      },
-    ],
-  },
-  {
-    path: "*",
-    element: loadable(ErrorPage),
-  },
-]);
+    scrollRestoration: "manual",
+  }
+);

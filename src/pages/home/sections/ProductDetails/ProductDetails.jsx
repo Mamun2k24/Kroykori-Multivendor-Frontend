@@ -4,7 +4,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Slider from "react-slick";
 import "./productDetails.css";
-import { useLoaderData, useNavigate } from "react-router-dom";
+import { useLoaderData, useNavigate, useLocation } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import RelatedProduct from "../RelatedProduct";
 import useCart from "../../../../hooks/useCart";
@@ -37,6 +37,7 @@ export default function ProductDetails() {
 
   const product = useLoaderData();
   const navigate = useNavigate();
+  const location = useLocation();
   const [, refetchCart] = useCart();
   const { user } = useUser();
   const userId = user?.id;
@@ -72,7 +73,10 @@ export default function ProductDetails() {
     preBook = {},
   } = product || {};
 
-  useEffect(() => window.scrollTo(0, 0), []);
+  // Fix: Force Instant Scroll Reset on Route Change or Page Back
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, [_id, location.pathname]);
 
   useEffect(() => {
     if (product?._id) addRecentlyViewed(product);
@@ -350,7 +354,7 @@ Color: ${selectedColor || "N/A"}`;
 
   return (
     <>
-      <div className="bg-gradient-to-br from-slate-50 via-white to-slate-50">
+      <div className="bg-gradient-to-br from-slate-50 via-white to-slate-50 pb-20 sm:pb-0">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-10 py-5 sm:py-8 lg:py-10">
           
           <button
@@ -832,7 +836,7 @@ Color: ${selectedColor || "N/A"}`;
         </div>
 
         {/* Mobile sticky action bar */}
-        <div className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200 shadow-lg">
+        <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 shadow-lg">
           <div className="px-3 py-3">
             <div className="flex items-center justify-between mb-3">
               <div>
